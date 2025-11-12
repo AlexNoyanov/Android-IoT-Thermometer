@@ -61,7 +61,7 @@ class MainViewModel :
             try {
                 // Replace with your actual API endpoint
                 val url =
-                    URL("https://api.jsonbin.io/v3/b/668b32e0e41b4d34e40e2b48") // Using a sample JSON endpoint
+                    URL("https://noyanov.com/Apps/Thermometer/random.php") // Using a sample JSON endpoint
                 val urlConnection = url.openConnection() as HttpURLConnection
                 urlConnection.requestMethod = "GET"
                 // urlConnection.setRequestProperty("X-Master-Key", "YOUR_API_KEY") // Add headers if needed
