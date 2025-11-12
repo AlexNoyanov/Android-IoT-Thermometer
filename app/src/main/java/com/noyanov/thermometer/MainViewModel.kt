@@ -53,9 +53,9 @@ class MainViewModel :
     }
 
     private fun connectToServer() = intent {
-        reduce { state.copy(temperatureStr = "",
-            humidityStr = "",
-            pressureStr = "")
+        reduce { state.copy(temperatureStr = "connecting...",
+            humidityStr = "connecting...",
+            pressureStr = "connecting...")
         }
         viewModelScope.launch(Dispatchers.IO) {
             try {
