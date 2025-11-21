@@ -14,22 +14,31 @@ import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.io.path.inputStream
 import kotlin.io.path.readText
+import kotlin.math.log
 
 data class MainViewState(
-    val name: String = "Android",
-    val temperatureStr: String = "0.0\u00B0",
-    val humidityStr: String = "0.0%",
-    val pressureStr: String = "0.0 mm"
-)
+  val page: Page = Page.LOGIN,
+  val login: String = "",
+  val password: String = "",
+  val name: String = "Android",
+  val temperatureStr: String = "0.0\u00B0",
+  val humidityStr: String = "0.0%",
+  val pressureStr: String = "0.0 mm",
+) {
+  enum class Page { LOGIN, DATA }
+}
 
 sealed class MainViewSideEffect {
     data class ShowToast(val message: String) : MainViewSideEffect()
 }
 
 sealed class MainViewIntent {
-    object UpdateName : MainViewIntent()
-    object ConnectToServer : MainViewIntent()
-    object DisconnectServer : MainViewIntent()
+  object UpdateName : MainViewIntent()
+  object ConnectToServer : MainViewIntent()
+  object DisconnectServer : MainViewIntent()
+  data class UpdateLogin(val login: String) : MainViewIntent()
+  data class UpdatePassword(val password: String) : MainViewIntent()
+  object Login : MainViewIntent()
 }
 
 
@@ -41,11 +50,30 @@ class MainViewModel :
 
     fun sendIntent(intent:MainViewIntent) {
         when (intent) {
-            MainViewIntent.UpdateName -> updateName()
-            MainViewIntent.ConnectToServer -> connectToServer()
-            MainViewIntent.DisconnectServer -> disconnectServer()
+          is MainViewIntent.UpdateLogin -> updateLogin(intent.login)
+          is MainViewIntent.UpdatePassword -> updatePassword(intent.password)
+          is MainViewIntent.Login -> login()
+          is MainViewIntent.UpdateName -> updateName()
+          is MainViewIntent.ConnectToServer -> connectToServer()
+          is MainViewIntent.DisconnectServer -> disconnectServer()
         }
     }
+
+  private fun updateLogin(login: String) = intent {
+    reduce { state.copy(login = login) }
+  }
+
+  private fun updatePassword(password: String) = intent {
+    reduce { state.copy(password = password) }
+  }
+
+  private fun login() = intent {
+    if (state.login.isEmpty() || state.password.isEmpty()) {
+      postSideEffect(MainViewSideEffect.ShowToast("Login or password is empty"))
+      return@intent
+    }
+    reduce { state.copy(page = MainViewState.Page.DATA) }
+  }
 
     private fun updateName() = intent {
         reduce { state.copy(name = "Android Updated") }
