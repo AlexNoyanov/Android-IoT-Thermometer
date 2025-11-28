@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -114,26 +115,52 @@ fun LoginScreen(viewModel: MainViewModel) {
     // 2. Use LaunchedEffect to run code once when the composable starts
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(title = { Text("Thermometer") })
+
+      modifier = Modifier.fillMaxSize(),
+
+      topBar = {
+        Row {
+          Spacer(modifier = Modifier.weight(1f))
+          TopAppBar(
+            modifier = Modifier.weight(2f),
+            title = { Text("Thermometer") })
+            Spacer(modifier = Modifier.weight(1f))
         }
+      }
     ) { innerPadding ->
       Column(modifier = Modifier.padding(innerPadding)) {
-        TextField(label = { Text("Login") },
-          value = state.login,
-          onValueChange = {
-          viewModel.sendIntent(MainViewIntent.UpdateLogin(it))
-        })
-        TextField(label = { Text("Password") },
-          value = state.password,
-          onValueChange = { viewModel.sendIntent(MainViewIntent.UpdatePassword(it)) })
-        Button(onClick = { viewModel.sendIntent(MainViewIntent.Login)}) {
-          Text("Login")
+        Row() {
+          Spacer(modifier = Modifier.weight(1f))
+          TextField(modifier = Modifier.weight(2f),
+            label = { Text("Login") },
+            value = state.login,
+            onValueChange = {
+            viewModel.sendIntent(MainViewIntent.UpdateLogin(it))
+          })
+          Spacer(modifier = Modifier.weight(1f))
+        }
+        Row() {
+          Spacer(modifier = Modifier.weight(1f))
+          TextField(modifier = Modifier.weight(2f),
+            label = { Text("Password") },
+            value = state.password,
+            onValueChange = { viewModel.sendIntent(MainViewIntent.UpdatePassword(it)) })
+          Spacer(modifier = Modifier.weight(1f))
+        }
+        Row() {
+            Spacer(modifier = Modifier.weight(1f))
+            Button(modifier = Modifier.weight(2f),
+              onClick = {
+                viewModel.sendIntent(MainViewIntent.Login)
+              }) {
+                 Text("Login")
+              }
+            Spacer(modifier = Modifier.weight(1f))
         }
       }
     }
-}
+ }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
