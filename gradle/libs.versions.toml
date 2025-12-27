@@ -9,6 +9,7 @@ lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
 orbitMVI = "10.0.0"
+retrofit2 = "2.11.0"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -30,6 +31,8 @@ orbit-mvi-core = { group = "org.orbit-mvi", name = "orbit-core", version.ref = "
 orbit-mvi-orbit-viewmodel = { group = "org.orbit-mvi", name = "orbit-viewmodel", version.ref = "orbitMVI" }
 orbit-mvi-orbit-compose = { group = "org.orbit-mvi", name = "orbit-compose", version.ref = "orbitMVI" }
 orbit-mvi-orbit-test = { group = "org.orbit-mvi", name = "orbit-test", version.ref = "orbitMVI" }
+squareup-retrofit2 = { group = "com.squareup.retrofit2", name="retrofit", version.ref="retrofit2" }
+squareup-retrofit2-converter-gson = { group = "com.squareup.retrofit2", name="converter-gson", version.ref="retrofit2" }
 
 
 [plugins]
