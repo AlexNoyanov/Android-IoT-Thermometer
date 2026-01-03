@@ -14,6 +14,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -80,7 +82,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ThermometerTheme {
-                MainScreen(viewModel = viewModel)
+              Screens(viewModel)
             }
         }
     }
@@ -98,7 +100,75 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun Screens(viewModel: MainViewModel) {
+  val state = viewModel.collectAsState().value
+  when(state.page) {
+    MainViewState.Page.LOGIN -> LoginScreen(viewModel)
+    MainViewState.Page.DATA -> DataScreen(viewModel)
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoginScreen(viewModel: MainViewModel) {
+    // 1. Collect state from the ViewModel
+    //val state by viewModel.collectAsState()
+    val state = viewModel.collectAsState().value
+    //val context = LocalContext.current
+    //Greeting(state.name, viewModel)
+    // 2. Use LaunchedEffect to run code once when the composable starts
+
+    Scaffold(
+
+      modifier = Modifier.fillMaxSize(),
+
+      topBar = {
+        Row {
+          Spacer(modifier = Modifier.weight(1f))
+          TopAppBar(
+            modifier = Modifier.weight(2f),
+            title = { Text("Thermometer") })
+            Spacer(modifier = Modifier.weight(1f))
+        }
+      }
+    ) { innerPadding ->
+      Column(modifier = Modifier.padding(innerPadding)) {
+        Row() {
+          Spacer(modifier = Modifier.weight(1f))
+          TextField(modifier = Modifier.weight(2f),
+            label = { Text("Login") },
+            value = state.login,
+            onValueChange = {
+            viewModel.sendIntent(MainViewIntent.UpdateLogin(it))
+          })
+          Spacer(modifier = Modifier.weight(1f))
+        }
+        Row() {
+          Spacer(modifier = Modifier.weight(1f))
+          TextField(modifier = Modifier.weight(2f),
+            label = { Text("Password") },
+            value = state.password,
+            onValueChange = { viewModel.sendIntent(MainViewIntent.UpdatePassword(it)) })
+          Spacer(modifier = Modifier.weight(1f))
+        }
+        Row() {
+            Spacer(modifier = Modifier.weight(1f))
+            Button(modifier = Modifier.weight(2f),
+              onClick = {
+                viewModel.sendIntent(MainViewIntent.Login)
+              }) {
+                 Text("Login")
+              }
+            Spacer(modifier = Modifier.weight(1f))
+        }
+      }
+    }
+ }
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DataScreen(viewModel: MainViewModel) {
     // 1. Collect state from the ViewModel
     //val state by viewModel.collectAsState()
     val state = viewModel.collectAsState().value
@@ -205,9 +275,17 @@ fun Greeting(name: String,
 
 @Preview(showBackground = true)
 @Composable
-fun MainScreenPreview() {
+fun LoginScreenPreview() {
+  ThermometerTheme {
+    LoginScreen(MainViewModel())
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DataScreenPreview() {
     ThermometerTheme {
-        MainScreen(MainViewModel())
+        DataScreen(MainViewModel())
     }
 }
 
