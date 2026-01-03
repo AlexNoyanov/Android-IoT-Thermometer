@@ -66,6 +66,9 @@ class MainViewModel :
                 urlConnection.requestMethod = "GET"
                 // urlConnection.setRequestProperty("X-Master-Key", "YOUR_API_KEY") // Add headers if needed
 
+
+
+
                 val responseCode = urlConnection.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val reader = BufferedReader(InputStreamReader(urlConnection.inputStream))

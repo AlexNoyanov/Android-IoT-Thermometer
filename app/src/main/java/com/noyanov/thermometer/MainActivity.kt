@@ -11,6 +11,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,8 +34,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -122,30 +126,44 @@ fun MainScreen(viewModel: MainViewModel) {
             TopAppBar(title = { Text("Thermometer") })
         }
     ) { innerPadding ->
-        InfoCard(
-            modifier = Modifier.padding(innerPadding),
-            state = state,
-        )
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            InfoCard(
+                modifier = Modifier.padding(innerPadding),
+                state = state,
+            )
+
+        }
     }
 }
 
 @Composable
 fun InfoCard(modifier: Modifier = Modifier,
             state: MainViewState) {
-    Card(modifier = modifier.padding(16.dp),
-        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.primary)
-        ) {
-        Indicator(imageVector = Icons.Default.Thermostat,
-            contentDescription = "Thermostat",
-            text = state.temperatureStr,
-            onClick = {}
+        Card(
+            modifier = modifier.padding(16.dp),
+            colors = CardDefaults.cardColors(
+
+                        containerColor = Color(154, 200, 245),
             )
-        Indicator(imageVector = Icons.Default.WaterDrop,
-            contentDescription = "Humidity",
-            text = state.humidityStr,
-            onClick = {}
-        )
-    }
+        ) {
+            Indicator(
+                imageVector = Icons.Default.Thermostat,
+                contentDescription = "Thermostat",
+                text = state.temperatureStr,
+                onClick = {}
+            )
+            Indicator(
+                imageVector = Icons.Default.WaterDrop,
+                contentDescription = "Humidity",
+                text = state.humidityStr,
+                onClick = {}
+            )
+        }
 }
 
 @Composable
@@ -159,7 +177,9 @@ fun Indicator(imageVector: ImageVector,
         //shape = RoundedCornerShape(30.dp),
         onClick = onClick) {
         Icon(imageVector = imageVector,
-            contentDescription = contentDescription)
+            contentDescription = contentDescription,
+//            tint = Color.Green // Changes icon to red
+        )
 
         Text(text)
     }
