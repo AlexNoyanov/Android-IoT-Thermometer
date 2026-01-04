@@ -2,6 +2,7 @@ package com.noyanov.thermometer
 
 import android.Manifest
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -30,12 +31,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.RoundRect
@@ -43,12 +49,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.noyanov.thermometer.ui.theme.ThermometerTheme
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.viewmodel.observe
 import kotlin.getValue
+
 
 class MainActivity : ComponentActivity() {
     private val viewModel : MainViewModel by viewModels()
@@ -90,9 +99,12 @@ class MainActivity : ComponentActivity() {
     private fun handleSideEffect(sideEffect: MainViewSideEffect) {
         when (sideEffect) {
             is MainViewSideEffect.ShowToast -> {
-                Toast.makeText(this,
-                    sideEffect.message,
-                    Toast.LENGTH_SHORT).show()
+                viewModel.intent { reduce { state.copy(snakeBarText = sideEffect.message) } }
+//                val toast = Toast.makeText(getApplicationContext(), sideEffect.message, Toast.LENGTH_SHORT)
+//                val view = toast.getView()
+//                val textView = view?.findViewById<TextView>(android.R.id.message)
+//                textView?.setTextColor(android.graphics.Color.RED)
+//                toast.show()
             }
         }
     }
@@ -118,10 +130,13 @@ fun LoginScreen(viewModel: MainViewModel) {
     //Greeting(state.name, viewModel)
     // 2. Use LaunchedEffect to run code once when the composable starts
 
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember {
+        SnackbarHostState()
+    }
+
     Scaffold(
-
       modifier = Modifier.fillMaxSize(),
-
       topBar = {
         Row {
           Spacer(modifier = Modifier.weight(1f))
@@ -130,7 +145,18 @@ fun LoginScreen(viewModel: MainViewModel) {
             title = { Text("Thermometer") })
             Spacer(modifier = Modifier.weight(1f))
         }
-      }
+      },
+      snackbarHost = {
+          SnackbarHost(hostState = snackbarHostState) { data ->
+              // Customize the Snackbar here
+              Snackbar(
+                  snackbarData = data,
+                  containerColor = Color.LightGray, // Optional: background color
+                  contentColor = Color.Red,         // Sets the text color to red
+                  actionColor = Color.Red       // Optional: action button color
+              )
+          }
+      },
     ) { innerPadding ->
       Column(modifier = Modifier.padding(innerPadding)) {
         Row() {
@@ -161,6 +187,13 @@ fun LoginScreen(viewModel: MainViewModel) {
               }
             Spacer(modifier = Modifier.weight(1f))
         }
+      }
+      if(state.snakeBarText != null) {
+          scope.launch {
+              val snackbarText = state.snakeBarText
+              snackbarHostState.showSnackbar(snackbarText)
+              viewModel.intent { reduce { state.copy(snakeBarText = null) }}
+          }
       }
     }
  }

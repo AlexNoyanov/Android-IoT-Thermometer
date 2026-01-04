@@ -30,6 +30,8 @@ data class MainViewState(
   val temperatureStr: String = "0.0\u00B0",
   val humidityStr: String = "0.0%",
   val pressureStr: String = "0.0 mm",
+  val user: LoginDataUser? = null,
+  val snakeBarText: String? = null,
 ) {
   enum class Page { LOGIN, DATA }
 }
@@ -39,9 +41,32 @@ interface ThermometerAPI {
   suspend fun getRandom(): ThermometerResponse
 }
 
+interface LoginAuth {
+    @GET("login.php")
+    suspend fun getAuthProcess(@Query("email") email: String, @Query("password") password:String): LoginDataRecord
+}
+
 data class ThermometerResponse(val record: RecordData)
 data class RecordData(val temperature: Double, val humidity: Double, val pressure: Double)
 
+//data class LoginResponse(val loginResponse: LoginDataRecord)
+
+
+//{"success":true,"message":"Login successful!","user":{"id":1,"username":"john_doe","full_name":"John Doe","role":"user"},"token":"e693ada76d3a45a8d38a227df22cd822","session_id":"d5b1bba0dbc44512882c8fe2b43c23da"}
+data class LoginDataRecord(
+    val success: Boolean,
+    val user: LoginDataUser?,
+    val token: String?,
+    val message: String?,
+    val session_id: String?
+    )
+
+data class LoginDataUser (
+    val id: Int,
+    val username: String,
+    val full_name: String,
+    val role: String
+)
 
 sealed class MainViewSideEffect {
     data class ShowToast(val message: String) : MainViewSideEffect()
@@ -82,13 +107,39 @@ class MainViewModel :
     reduce { state.copy(password = password) }
   }
 
+    val API_URL  = "https://noyanov.com/Apps/Thermometer/"
   private fun login() = intent {
     if (state.login.isEmpty() || state.password.isEmpty()) {
       postSideEffect(MainViewSideEffect.ShowToast("Login or password is empty"))
       return@intent
     }
-    reduce { state.copy(page = MainViewState.Page.DATA) }
+      // Send request for login here
+        try {
+            val retrofit = Retrofit.Builder().baseUrl(API_URL)
+                .addConverterFactory(GsonConverterFactory.create()).build()
+            val service = retrofit.create(LoginAuth::class.java)
+            val data = service.getAuthProcess(email = state.login, password = state.password)
+            //val data = response.loginResponse
+
+            if(data.success) {
+                reduce { state.copy(user = data.user,
+                    page = MainViewState.Page.DATA) }
+            } else {
+                postSideEffect(MainViewSideEffect.ShowToast(data.message ?: "Error"))
+
+            }
+        } catch (e: Exception) {
+            postSideEffect(MainViewSideEffect.ShowToast("Error: ${e.message}"))
+//            reduce {
+//                state.copy(temperatureStr = "Error", humidityStr = "Error", pressureStr = "Error")
+//            }
+        }
+
+
+
   }
+
+
 
     private fun updateName() = intent {
         reduce { state.copy(name = "Android Updated") }
@@ -103,13 +154,10 @@ class MainViewModel :
 
       viewModelScope.launch(Dispatchers.IO) {
         try {
-          val retrofit = Retrofit.Builder().baseUrl("https://noyanov.com/Apps/Thermometer/")
+          val retrofit = Retrofit.Builder().baseUrl(API_URL)
             .addConverterFactory(GsonConverterFactory.create()).build()
 
-
-
-
-                val service = retrofit.create(ThermometerAPI::class.java)
+          val service = retrofit.create(ThermometerAPI::class.java)
           val response = service.getRandom()
           val data = response.record
 
