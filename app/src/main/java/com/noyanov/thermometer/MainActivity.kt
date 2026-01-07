@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
@@ -36,8 +37,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -137,17 +141,44 @@ fun Screens(viewModel: MainViewModel, onBackStackCreated: (NavBackStack<NavKey>)
       onBackStackCreated(backStack)
   }
 
+  val currentKey = backStack.lastOrNull()
+  val isRoot = currentKey is ScreenLogin
+
+  val screenTitle = when (currentKey) {
+    is ScreenLogin -> stringResource(R.string.login_title)
+    is ScreenData -> stringResource(R.string.data_title)
+    else -> stringResource(R.string.app_title)
+  }
+
   Scaffold(
     modifier = Modifier.fillMaxSize(),
     topBar = {
-      Row {
-        Spacer(modifier = Modifier.weight(1f))
+//      Row {
+//        Spacer(modifier = Modifier.weight(1f))
         TopAppBar(
-          modifier = Modifier.weight(2f),
-          title = { Text("Thermometer") })
-        Spacer(modifier = Modifier.weight(1f))
-      }
+          navigationIcon = { if (!isRoot) {
+              androidx.compose.material3.IconButton(onClick = { backStack.removeLastOrNull() }) {
+                androidx.compose.material.icons.Icons.Filled.ArrowBack.let { icon ->
+                  androidx.compose.material3.Icon(imageVector = icon, contentDescription = stringResource(R.string.logout))
+                }
+              }
+          } },
+//          modifier = Modifier.weight(2f),
+          title = {
+            Column {
+              Text(modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = stringResource(R.string.app_title),
+                fontSize = 25.sp
+                )
+              Text(modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = screenTitle)
+            }
+        })
     }
+//        Spacer(modifier = Modifier.weight(1f))
+//      }
 ) { innerPadding ->
       NavDisplay(
         backStack = backStack,
