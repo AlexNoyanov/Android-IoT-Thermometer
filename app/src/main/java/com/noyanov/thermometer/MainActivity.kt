@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
@@ -38,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -158,7 +160,7 @@ fun Screens(viewModel: MainViewModel, onBackStackCreated: (NavBackStack<NavKey>)
         TopAppBar(
           navigationIcon = { if (!isRoot) {
               androidx.compose.material3.IconButton(onClick = { backStack.removeLastOrNull() }) {
-                androidx.compose.material.icons.Icons.Filled.ArrowBack.let { icon ->
+                androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack.let { icon ->
                   androidx.compose.material3.Icon(imageVector = icon, contentDescription = stringResource(R.string.logout))
                 }
               }
@@ -169,7 +171,8 @@ fun Screens(viewModel: MainViewModel, onBackStackCreated: (NavBackStack<NavKey>)
               Text(modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 text = stringResource(R.string.app_title),
-                fontSize = 25.sp
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
                 )
               Text(modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
