@@ -2,6 +2,7 @@ package com.noyanov.thermometer
 
 import android.Manifest
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,28 +25,39 @@ import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.noyanov.thermometer.ui.theme.ThermometerTheme
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.viewmodel.observe
 import kotlin.getValue
+
 
 class MainActivity : ComponentActivity() {
     private val viewModel : MainViewModel by viewModels()
@@ -86,9 +99,12 @@ class MainActivity : ComponentActivity() {
     private fun handleSideEffect(sideEffect: MainViewSideEffect) {
         when (sideEffect) {
             is MainViewSideEffect.ShowToast -> {
-                Toast.makeText(this,
-                    sideEffect.message,
-                    Toast.LENGTH_SHORT).show()
+                viewModel.intent { reduce { state.copy(snakeBarText = sideEffect.message) } }
+//                val toast = Toast.makeText(getApplicationContext(), sideEffect.message, Toast.LENGTH_SHORT)
+//                val view = toast.getView()
+//                val textView = view?.findViewById<TextView>(android.R.id.message)
+//                textView?.setTextColor(android.graphics.Color.RED)
+//                toast.show()
             }
         }
     }
@@ -114,10 +130,13 @@ fun LoginScreen(viewModel: MainViewModel) {
     //Greeting(state.name, viewModel)
     // 2. Use LaunchedEffect to run code once when the composable starts
 
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember {
+        SnackbarHostState()
+    }
+
     Scaffold(
-
       modifier = Modifier.fillMaxSize(),
-
       topBar = {
         Row {
           Spacer(modifier = Modifier.weight(1f))
@@ -126,7 +145,18 @@ fun LoginScreen(viewModel: MainViewModel) {
             title = { Text("Thermometer") })
             Spacer(modifier = Modifier.weight(1f))
         }
-      }
+      },
+      snackbarHost = {
+          SnackbarHost(hostState = snackbarHostState) { data ->
+              // Customize the Snackbar here
+              Snackbar(
+                  snackbarData = data,
+                  containerColor = Color.LightGray, // Optional: background color
+                  contentColor = Color.Red,         // Sets the text color to red
+                  actionColor = Color.Red       // Optional: action button color
+              )
+          }
+      },
     ) { innerPadding ->
       Column(modifier = Modifier.padding(innerPadding)) {
         Row() {
@@ -157,6 +187,13 @@ fun LoginScreen(viewModel: MainViewModel) {
               }
             Spacer(modifier = Modifier.weight(1f))
         }
+      }
+      if(state.snakeBarText != null) {
+          scope.launch {
+              val snackbarText = state.snakeBarText
+              snackbarHostState.showSnackbar(snackbarText)
+              viewModel.intent { reduce { state.copy(snakeBarText = null) }}
+          }
       }
     }
  }
@@ -192,30 +229,44 @@ fun DataScreen(viewModel: MainViewModel) {
             TopAppBar(title = { Text("Thermometer") })
         }
     ) { innerPadding ->
-        InfoCard(
-            modifier = Modifier.padding(innerPadding),
-            state = state,
-        )
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            InfoCard(
+                modifier = Modifier.padding(innerPadding),
+                state = state,
+            )
+
+        }
     }
 }
 
 @Composable
 fun InfoCard(modifier: Modifier = Modifier,
             state: MainViewState) {
-    Card(modifier = modifier.padding(16.dp),
-        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.primary)
-        ) {
-        Indicator(imageVector = Icons.Default.Thermostat,
-            contentDescription = "Thermostat",
-            text = state.temperatureStr,
-            onClick = {}
+        Card(
+            modifier = modifier.padding(16.dp),
+            colors = CardDefaults.cardColors(
+
+                        containerColor = Color(154, 200, 245),
             )
-        Indicator(imageVector = Icons.Default.WaterDrop,
-            contentDescription = "Humidity",
-            text = state.humidityStr,
-            onClick = {}
-        )
-    }
+        ) {
+            Indicator(
+                imageVector = Icons.Default.Thermostat,
+                contentDescription = "Thermostat",
+                text = state.temperatureStr,
+                onClick = {}
+            )
+            Indicator(
+                imageVector = Icons.Default.WaterDrop,
+                contentDescription = "Humidity",
+                text = state.humidityStr,
+                onClick = {}
+            )
+        }
 }
 
 @Composable
@@ -229,7 +280,9 @@ fun Indicator(imageVector: ImageVector,
         //shape = RoundedCornerShape(30.dp),
         onClick = onClick) {
         Icon(imageVector = imageVector,
-            contentDescription = contentDescription)
+            contentDescription = contentDescription,
+//            tint = Color.Green // Changes icon to red
+        )
 
         Text(text)
     }
