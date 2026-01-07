@@ -2,25 +2,13 @@ package com.noyanov.thermometer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
 
 data class MainViewState(
   val page: Page = Page.LOGIN,
@@ -45,6 +33,7 @@ data class RecordData(val temperature: Double, val humidity: Double, val pressur
 
 sealed class MainViewSideEffect {
     data class ShowToast(val message: String) : MainViewSideEffect()
+    data class NextPage(val page: MainViewState.Page) : MainViewSideEffect()
 }
 
 sealed class MainViewIntent {
@@ -88,6 +77,7 @@ class MainViewModel :
       return@intent
     }
     reduce { state.copy(page = MainViewState.Page.DATA) }
+    postSideEffect(MainViewSideEffect.NextPage(MainViewState.Page.DATA))
   }
 
     private fun updateName() = intent {
