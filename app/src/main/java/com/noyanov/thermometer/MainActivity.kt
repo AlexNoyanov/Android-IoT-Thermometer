@@ -4,12 +4,13 @@ import android.Manifest
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +18,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
@@ -35,20 +36,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.noyanov.thermometer.ui.theme.ThermometerTheme
+import kotlinx.serialization.Serializable
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.viewmodel.observe
 import kotlin.getValue
 
 class MainActivity : ComponentActivity() {
     private val viewModel : MainViewModel by viewModels()
-    // 1. Define the launcher as a property of the Activity
+
+    // hold the nav back stack instance provided from the composable
+    private var navBackStack: NavBackStack<NavKey>? = null
+
+  // 1. Define the launcher as a property of the Activity
     private val requestPermissionLauncher: ActivityResultLauncher<String> =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -78,10 +91,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ThermometerTheme {
-              Screens(viewModel)
+              Screens(viewModel) { backStack ->
+                navBackStack = backStack
+              }
             }
         }
     }
+
 
     private fun handleSideEffect(sideEffect: MainViewSideEffect) {
         when (sideEffect) {
@@ -90,17 +106,140 @@ class MainActivity : ComponentActivity() {
                     sideEffect.message,
                     Toast.LENGTH_SHORT).show()
             }
+
+          is MainViewSideEffect.NextPage -> {
+            when(sideEffect.page) {
+              MainViewState.Page.LOGIN -> {
+                navBackStack?.add(ScreenLogin)
+              }
+              MainViewState.Page.DATA -> {
+                navBackStack?.add(ScreenData)
+              }
+            }
+          }
         }
     }
 }
 
+@Serializable
+data object ScreenLogin : NavKey
+
+@Serializable
+data object ScreenData : NavKey
+//
+//@Serializable
+//data object ScreenC : NavKey
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Screens(viewModel: MainViewModel) {
-  val state = viewModel.collectAsState().value
-  when(state.page) {
-    MainViewState.Page.LOGIN -> LoginScreen(viewModel)
-    MainViewState.Page.DATA -> DataScreen(viewModel)
+fun Screens(viewModel: MainViewModel, onBackStackCreated: (NavBackStack<NavKey>) -> Unit) {
+//  val state = viewModel.collectAsState().value
+
+  val backStack = rememberNavBackStack(ScreenLogin)
+
+  // pass the remembered backStack to the Activity once it's available
+  LaunchedEffect(backStack) {
+      onBackStackCreated(backStack)
+  }
+
+  val currentKey = backStack.lastOrNull()
+  val isRoot = currentKey is ScreenLogin
+
+  val screenTitle = when (currentKey) {
+    is ScreenLogin -> stringResource(R.string.login_title)
+    is ScreenData -> stringResource(R.string.data_title)
+    else -> stringResource(R.string.app_title)
+  }
+
+  Scaffold(
+    modifier = Modifier.fillMaxSize(),
+    topBar = {
+//      Row {
+//        Spacer(modifier = Modifier.weight(1f))
+        TopAppBar(
+          navigationIcon = { if (!isRoot) {
+              androidx.compose.material3.IconButton(onClick = { backStack.removeLastOrNull() }) {
+                androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack.let { icon ->
+                  androidx.compose.material3.Icon(imageVector = icon, contentDescription = stringResource(R.string.logout))
+                }
+              }
+          } },
+//          modifier = Modifier.weight(2f),
+          title = {
+            Column {
+              Text(modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = stringResource(R.string.app_title),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+                )
+              Text(modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = screenTitle)
+            }
+        })
+    }
+//        Spacer(modifier = Modifier.weight(1f))
+//      }
+) { innerPadding ->
+      NavDisplay(
+        backStack = backStack,
+        onBack = { backStack.removeLastOrNull() },
+        entryProvider = entryProvider {
+            entry<ScreenLogin> {
+              LoginScreen(viewModel)
+            }
+            entry<ScreenData> {
+              DataScreen(viewModel)
+            }
+  //          entry<ScreenC>(
+  //              metadata = NavDisplay.transitionSpec {
+  //                  // Slide new content up, keeping the old content in place underneath
+  //                  slideInVertically(
+  //                      initialOffsetY = { it },
+  //                      animationSpec = tween(1000)
+  //                  ) togetherWith ExitTransition.KeepUntilTransitionsFinished
+  //              } + NavDisplay.popTransitionSpec {
+  //                  // Slide old content down, revealing the new content in place underneath
+  //                  EnterTransition.None togetherWith
+  //                      slideOutVertically(
+  //                          targetOffsetY = { it },
+  //                          animationSpec = tween(1000)
+  //                      )
+  //              } + NavDisplay.predictivePopTransitionSpec {
+  //                  // Slide old content down, revealing the new content in place underneath
+  //                  EnterTransition.None togetherWith
+  //                      slideOutVertically(
+  //                          targetOffsetY = { it },
+  //                          animationSpec = tween(1000)
+  //                      )
+  //              }
+  //          ) {
+  //              ContentGreen("This is Screen C")
+  //          }
+        },
+        transitionSpec = {
+            // Slide in from right when navigating forward
+            slideInHorizontally(initialOffsetX = { it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { -it })
+        },
+        popTransitionSpec = {
+            // Slide in from left when navigating back
+            slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { it })
+        },
+        predictivePopTransitionSpec = {
+            // Slide in from left when navigating back
+            slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { it })
+        },
+        modifier = Modifier.padding(innerPadding)
+    )
+
+//  when(state.page) {
+//    MainViewState.Page.LOGIN -> LoginScreen(viewModel)
+//    MainViewState.Page.DATA -> DataScreen(viewModel)
+//  }
   }
 }
 
@@ -114,21 +253,19 @@ fun LoginScreen(viewModel: MainViewModel) {
     //Greeting(state.name, viewModel)
     // 2. Use LaunchedEffect to run code once when the composable starts
 
-    Scaffold(
-
-      modifier = Modifier.fillMaxSize(),
-
-      topBar = {
-        Row {
-          Spacer(modifier = Modifier.weight(1f))
-          TopAppBar(
-            modifier = Modifier.weight(2f),
-            title = { Text("Thermometer") })
-            Spacer(modifier = Modifier.weight(1f))
-        }
-      }
-    ) { innerPadding ->
-      Column(modifier = Modifier.padding(innerPadding)) {
+//    Scaffold(
+//      modifier = Modifier.fillMaxSize(),
+//      topBar = {
+//        Row {
+//          Spacer(modifier = Modifier.weight(1f))
+//          TopAppBar(
+//            modifier = Modifier.weight(2f),
+//            title = { Text("Thermometer") })
+//            Spacer(modifier = Modifier.weight(1f))
+//        }
+//      }
+//    ) { innerPadding ->
+      Column() { //modifier = Modifier.padding(innerPadding)) {
         Row() {
           Spacer(modifier = Modifier.weight(1f))
           TextField(modifier = Modifier.weight(2f),
@@ -158,7 +295,7 @@ fun LoginScreen(viewModel: MainViewModel) {
             Spacer(modifier = Modifier.weight(1f))
         }
       }
-    }
+//    }
  }
 
 
@@ -186,17 +323,17 @@ fun DataScreen(viewModel: MainViewModel) {
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(title = { Text("Thermometer") })
-        }
-    ) { innerPadding ->
+//    Scaffold(
+//        modifier = Modifier.fillMaxSize(),
+//        topBar = {
+//            TopAppBar(title = { Text("Thermometer") })
+//        }
+//    ) { innerPadding ->
         InfoCard(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier,//.padding(innerPadding),
             state = state,
         )
-    }
+//    }
 }
 
 @Composable
