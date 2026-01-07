@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // 2. Launch the permission request from onCreate
-        //requestPermissionLauncher.launch(Manifest.permission.INTERNET)
+        requestPermissionLauncher.launch(Manifest.permission.INTERNET)
 
         // 2. Collect side effects
         viewModel.observe(
